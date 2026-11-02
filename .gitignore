@@ -1,0 +1,17 @@
+# IDE / Agent 运行时缓存与本地状态，不入库
+.codeartsdoer/
+.note/
+.tmp/
+node_modules/
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
