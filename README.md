@@ -4,11 +4,11 @@
 
 **把 AI 代码与论文，读成一份能沉淀下来的学习笔记。**
 
-一个面向 AI 算法场景的 Agent Skill：读代码、读论文、画计算图、核行号、写公式，最后产出结构固定的 Markdown 笔记。
+一个面向 AI 算法场景的 Agent Skill：读代码、读论文、画计算图、按符号定位核对、写公式，最后产出结构固定的 Markdown 笔记。
 
 <sub>Turn AI papers & source code into reusable, template-locked study notes.</sub>
 
-[![Version](https://img.shields.io/badge/version-0.1.6-54509F?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.1.8-54509F?style=flat-square)](CHANGELOG.md)
 ![Type](https://img.shields.io/badge/type-agent%20skill-4A6B7A?style=flat-square)
 ![Runtime](https://img.shields.io/badge/runtime-subagent-8B7DA6?style=flat-square)
 ![Notes](https://img.shields.io/badge/output-markdown-4D7A6B?style=flat-square)
@@ -27,7 +27,7 @@
 | 翻车方式 | 表现 | note-ai 的对策 |
 | --- | --- | --- |
 | 🌀 **自由发挥** | 每次章节结构都不一样，第二篇笔记就和第一篇对不上 | 模板即终点：顶层章节固定，禁止自创 |
-| 👻 **幻觉引用** | 行号、变量名、论文公式全靠编，回头对不上源码 | 行号逐条核对 + 前向图逐行对照源码 |
+| 👻 **幻觉引用** | 代码定位、变量名、论文公式全靠编，回头对不上源码 | 符号级定位核对（禁用行号）+ 前向图逐条对照源码 |
 | 🧊 **只讲是什么** | 公式堆一屏，符号不解释，读者不知道哪个是输入、哪个是推导 | 符号三层解释：含义 / 元素组成 / 来源 |
 
 note-ai 把这些要求写成 skill 内部的**硬约束 + 收尾检查清单**，让每次产出都落在同一条质量线上。
@@ -39,6 +39,7 @@ note-ai 把这些要求写成 skill 内部的**硬约束 + 收尾检查清单**�
 | 能力 | 说明 |
 | --- | --- |
 | 📐 **模板即终点** | 代码笔记固定 7 章、论文笔记固定 6 章，**顶层章节不许改名、不许新增**。不适用的小节显式标注"（本节不适用）"，而不是删掉换一个自己想的。 |
+| 🧩 **自动模块拆解** | 多模块仓库先按「运行时职责 + 依赖方向 + 共同变更原因」拆成 3–9 个模块，产出模块表与索引 `readme.md`，再逐篇写；命名 `NN-<主符号>.md`、编号按依赖顺序且**只追加不重排**。 |
 | 🔍 **源码级核对** | 前向计算图不是"画个大概"，而是**逐行对照源码建立变量定义表**，专抓链式赋值、变量复用、分叉点位置这三类语义错误。 |
 | 🎨 **统一的 Mermaid 绘图规范** | 低饱和度配色 + 三行节点（名称 / 公式 / 维度）；公式必须是严谨的 `输出 = f(输入)` 形式，变量名跟随源码，**图内不允许出现游离符号**。 |
 | 🧮 **符号三层解释** | 每个数学符号都要说清三件事：① **含义** —— 它代表什么；② **元素组成** —— 复合量逐分量拆开、维度写全；③ **来源** —— 由哪条公式算出，还是数据直接给定。 |
@@ -86,7 +87,7 @@ git clone https://github.com/MonsterFan-Cyber/note-ai.git `
 
 AI  > 建议路径：.note/code_note_v4_pro/03-moe.md，确认吗？
 
-AI  > 已生成大纲 _03-moe.md（章节要点 + 待核对行号 + 待绘图清单）
+AI  > 已生成大纲 _03-moe.md（章节要点 + 待核对符号 + 待绘图清单）
 
 AI  > 已产出正式笔记，收尾检查清单已逐项核对，大纲临时文件已删除。
 ```
@@ -106,15 +107,16 @@ flowchart TD
     classDef warn fill:#8B4A4A,stroke:#6B3030,color:#fff
 
     A["输入\n代码 / 论文 / 文档"]:::data --> B["读模板 + 范文\ntemplates/ examples/"]:::norm
-    B --> C["通读源码或论文\n定位行号与公式"]:::layer
-    C --> D["建议笔记路径\n用户可改"]:::op
+    B --> C["通读源码或论文\n定位符号与公式"]:::layer
+    C --> M["模块拆解（代码仓库）\n模块表 + 索引 readme.md"]:::op
+    M --> D["建议笔记路径\n用户可改"]:::op
     D --> E["产出 _ 大纲临时文件\n带要点，不带正文"]:::op
     E --> F{"用户说\n等我审核?"}:::warn
     F -- "是" --> G["暂停，等待审核"]:::warn
     F -- "否（默认）" --> H["重读大纲并逐节填充"]:::layer
     G --> H
     H --> I["自查：完成检查清单"]:::layer
-    I --> J["删除 _ 大纲临时文件"]:::op
+    I --> J["删除 _ 大纲临时文件\n回填索引"]:::op
     J --> K["交付笔记"]:::data
 ```
 
@@ -159,7 +161,11 @@ flowchart TD
 - ✅ 章节树与模板对齐，无自创 / 改名顶层章节，不适用小节已标注
 - ✅ 可学习参数与非可学习成员分成两个表，缓冲已标注 `(buffer)`
 - ✅ 子模块未展开，仅简短介绍被调用的成员与函数（用户显式指定的 class 除外）
-- ✅ 头部引用块与正文行号已与当前代码实际核对
+- ✅ 代码仓库笔记：模块表已写入 `readme.md`，索引与磁盘文件一一对应
+- ✅ 代码仓库笔记：文件名为 `NN-<主符号>.md`，编号按依赖顺序且未重排既有编号
+- ✅ 代码仓库笔记：各篇覆盖符号无交集、无遗漏；薄入口脚本已合并成流程篇
+- ✅ 笔记中无任何源码行号定位（头部引用块、正文、表格、图注均用类 / 函数 / 符号名定位）
+- ✅ 论文笔记头部含"开源代码"行：官方仓库给完整 URL 与 License，未开源则显式说明
 - ✅ 与原始代码 / 论文无矛盾之处
 
 </details>
@@ -195,11 +201,13 @@ note-ai/
 ├── LICENSE
 ├── templates/
 │   ├── code-outline.md       # 代码笔记模板（章节骨架 + 填写说明）
+│   ├── code-repo-index.md    # 代码仓库索引模板（模块总表 / 切分说明 / 阅读顺序）
 │   └── paper-outline.md      # 论文笔记模板
 ├── examples/
 │   └── 01-compressor.md      # 完整范文：一个模块的代码笔记
 └── references/
-    └── troubleshooting.md    # 踩坑手册：Mermaid / PDF 裁剪 / 图片渲染
+    ├── module-decomposition.md  # 拆解手册：切分依据 / 粒度规则 R1–R5 / 命名编号
+    └── troubleshooting.md       # 踩坑手册：Mermaid / PDF 裁剪 / 图片渲染
 ```
 
 运行期参数（写在 `SKILL.md` frontmatter 中）：
