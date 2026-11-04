@@ -42,7 +42,7 @@
 
 ## 5. 大纲临时文件遗漏未删
 
-**现象**：`.note/` 下残留 `_` 前缀大纲文件，违反 SKILL.md 5.5 收尾硬步骤。
+**现象**：`.note/` 下残留 `_` 前缀大纲文件，违反 SKILL.md「撰写工作流」第 5 步的收尾硬步骤。
 
 **处置**：填充完成后主动列出 `.note/` 下所有 `_` 前缀文件并删除；若用户已修改过大纲且需要留档，在交付前询问用户是否删除。
 
@@ -51,3 +51,6 @@
 **现象**：`SKILL.md` 的 frontmatter `version` 与 `CHANGELOG.md` 最新条目不一致。
 
 **处置**：每次修改 SKILL.md、模板或新增资源后，递增 `version` 并在 `CHANGELOG.md` 顶部追加条目（日期格式 `YYYY-MM-DD`），随后同步检查 `README.md` 目录结构与版本描述。
+
+> **版本号有三处，必须同时改**：① `SKILL.md` frontmatter 的 `version`；② `README.md` 顶部 shields.io 徽章 `version-x.y.z`（最容易漏，已实际漏过一次）；③ `README.md` 末尾「📅 版本」段的"当前版本 **x.y.z**"。
+> 核对命令：`Select-String -Path SKILL.md,README.md -Pattern 'version[: ]|version-|当前版本'`，三处应完全一致。

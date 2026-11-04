@@ -8,7 +8,7 @@
 
 <sub>Turn AI papers & source code into reusable, template-locked study notes.</sub>
 
-[![Version](https://img.shields.io/badge/version-0.1.8-54509F?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.1.11-54509F?style=flat-square)](CHANGELOG.md)
 ![Type](https://img.shields.io/badge/type-agent%20skill-4A6B7A?style=flat-square)
 ![Runtime](https://img.shields.io/badge/runtime-subagent-8B7DA6?style=flat-square)
 ![Notes](https://img.shields.io/badge/output-markdown-4D7A6B?style=flat-square)
@@ -76,7 +76,11 @@ git clone https://github.com/MonsterFan-Cyber/note-ai.git `
 | 触发词 | `在 .note 里给 MoE 这个类写一篇代码笔记` |
 | 触发词 | `@.note 读一下这篇论文，输出笔记` |
 | 斜杠命令 | `/note` |
-| 自然语言 | `帮我讲讲 FlashVDM 里的 volume decoder 是怎么实现的` |
+| 自然语言 | `读一下 src/ 这份代码，给我写份代码阅读笔记` |
+| 自然语言 | `帮我给这个仓库整理一套源码笔记` |
+
+> 只问"这段代码怎么实现的、不用写文件"属于答疑，请用 `chat`。
+> 目标是**多文件仓库**时，先自动拆模块并生成索引 `readme.md`（模块表会先给你看，可要求合并/拆分），再逐篇写笔记——即使用户只说"写份代码阅读笔记"也一样。
 
 笔记默认写入项目根目录下的 `.note/`，可通过调用参数 `allowed_dir` 改写。
 
@@ -85,9 +89,9 @@ git clone https://github.com/MonsterFan-Cyber/note-ai.git `
 ```text
 你  > 在 .note 里分析 src/models/moe.py 的 MoE 类
 
-AI  > 建议路径：.note/code_note_v4_pro/03-moe.md，确认吗？
+AI  > 建议路径：.note/code_note_v4_pro/03-MoE.md，确认吗？
 
-AI  > 已生成大纲 _03-moe.md（章节要点 + 待核对符号 + 待绘图清单）
+AI  > 已生成大纲 _03-MoE.md（章节要点 + 待核对符号 + 待绘图清单）
 
 AI  > 已产出正式笔记，收尾检查清单已逐项核对，大纲临时文件已删除。
 ```
@@ -136,6 +140,8 @@ flowchart TD
 7. 关键设计要点        只回答"为什么"
 ```
 
+> 非类模块（流程篇 / `Dataset`）按 [`templates/code-outline.md`](templates/code-outline.md) 文末的「非类模块适配表」改写第 3 / 4 章标题（含第 4 章 H3 小节）与第 1 章字段，章数仍为 7，并在头部"说明"行注明。
+
 ### 论文笔记（6 章）
 
 ```text
@@ -164,6 +170,7 @@ flowchart TD
 - ✅ 代码仓库笔记：模块表已写入 `readme.md`，索引与磁盘文件一一对应
 - ✅ 代码仓库笔记：文件名为 `NN-<主符号>.md`，编号按依赖顺序且未重排既有编号
 - ✅ 代码仓库笔记：各篇覆盖符号无交集、无遗漏；薄入口脚本已合并成流程篇
+- ✅ 非类模块（流程篇 / Dataset）已按适配表改写第 3/4 章标题与第 1 章字段，并在头部注明"非类模块适配"
 - ✅ 笔记中无任何源码行号定位（头部引用块、正文、表格、图注均用类 / 函数 / 符号名定位）
 - ✅ 论文笔记头部含"开源代码"行：官方仓库给完整 URL 与 License，未开源则显式说明
 - ✅ 与原始代码 / 论文无矛盾之处
@@ -216,7 +223,7 @@ note-ai/
 | --- | --- | --- |
 | `runAs` | `subagent` | 以子代理身份运行，拥有独立上下文 |
 | `invocation` | `manual` | 需触发词或 `/note` 命令唤起 |
-| `allowed-tools` | `read_file` `write_file` `edit_file` `bash` `web_search` | 工具白名单 |
+| `allowed-tools` | `read_file` `write_file` `edit_file` `bash` `web_search` | 工具白名单；不同运行时命名不同（如 opencode 中为 `read` / `write` / `edit` / `shell` / `websearch`），按能力对应即可 |
 | `allowed_dir` | `.note` | 唯一允许写入的目录，可被调用方覆盖 |
 | `model` | `deepseek-v4-flash` | 默认运行模型 |
 
@@ -240,6 +247,15 @@ note-ai/
 <summary><b>笔记会写到哪里？会不会动我的源码？</b></summary>
 
 只写 `allowed_dir`（默认 `.note/`）。读取不限，但写入被锁在笔记目录内；需要写到目录外会先征得你同意。
+
+</details>
+
+<details>
+<summary><b>我只说"写份代码阅读笔记"，它会先拆模块吗？</b></summary>
+
+会。只要目标是**代码仓库**（≥2 个源文件，或单文件 ≥3 个顶层类/函数）且你没有指定具体类，就会先按「运行时职责 + 依赖方向 + 共同变更原因」拆成 3–9 个模块，生成索引 `readme.md`，并把模块表先给你看。想调整划分就在这一步说——进入大纲后不再重切。
+
+"给我讲讲这段代码怎么实现的、不用写文件"这类纯答疑不走这条流程，用 `chat`。
 
 </details>
 
@@ -269,7 +285,7 @@ note-ai/
 <details>
 <summary><b>能用在 Claude Code / 其他 Agent 上吗？</b></summary>
 
-`SKILL.md` 是自包含的 Markdown 指令，核心约束不依赖特定运行时。只需把目录放在对应运行时的 skills 搜索路径下，并保证 `read/write/edit/bash/web_search` 这几类工具可用。
+`SKILL.md` 是自包含的 Markdown 指令，核心约束不依赖特定运行时。只需把目录放在对应运行时的 skills 搜索路径下，并保证"读文件 / 写文件 / 改文件 / 执行命令 / 联网检索"这几类能力可用（工具名各家不同，按能力对应即可）。
 
 </details>
 
@@ -277,7 +293,7 @@ note-ai/
 
 ## 📅 版本
 
-当前版本 **0.1.6**，完整变更历史见 [CHANGELOG.md](CHANGELOG.md)。
+当前版本 **0.1.11**，完整变更历史见 [CHANGELOG.md](CHANGELOG.md)。
 
 ---
 
